@@ -50,7 +50,7 @@ function sortAndRender(column, order) {
 
     // Handle missing values (always sort them last)
     if (valA === null || valA === "N/A" || valA === "-") return 1;
-    if (valB === null || valB === "N/A" || valB === "-") return -1;
+    if (valB === null || valB === "N/A" || valB === "-" ) return -1;
 
     // Convert to number if applicable
     const isNumericColumn = [
@@ -69,8 +69,8 @@ function sortAndRender(column, order) {
       valA = convertWeightToKg(valA);
       valB = convertWeightToKg(valB);
     } else if (column === "appearance.height") {
-      valA = parseFloat(valA);
-      valB = parseFloat(valB);
+      valA = convertMeterToCm(valA);
+      valB = convertMeterToCm(valB);
     }
 
     return order === "asc" ? (valA >= valB ? 1 : -1) : valA <= valB ? 1 : -1;
@@ -84,26 +84,21 @@ function sortAndRender(column, order) {
 function convertWeightToKg(weight) {
   if (!weight) return null;
 
-  let match = weight.match(/(\d+)\s*(kg|tons)/i);
+  let match = weight.match(/(\d+|\d+,\d+)\s*(kg|tons)/i);
   if (!match) return null; // If no match, return null
-
-  let value = parseFloat(match[1]); // Extract numeric value
+  let digits = match[1].replace(",", ""); // Remove the comma
+  let value = parseFloat(digits); // Extract numeric value
   let unit = match[2].toLowerCase(); // Extract unit
-
   return unit === "tons" ? value * 1000 : value; // Convert tons to kg
 }
 
-// Convert height ("6'2" → inches)
-function convertHeightToInches(height) {
+function convertMeterToCm(height) {
   if (!height) return null;
-
-  let match = height.match(/(\d+)'(\d+)?/);
-  if (!match) return null;
-
-  let feet = parseInt(match[1]);
-  let inches = match[2] ? parseInt(match[2]) : 0;
-
-  return feet * 12 + inches; // Convert height to inches
+  let match = height.match(/(\d+|\d+.\d+)\s*(meters|cm)/i);
+  if (!match) return null; // If no match, return null
+  let value = parseFloat(match[1]); // Extract numeric value
+  let unit = match[2].toLowerCase(); // Extract unit
+  return unit === "meters" ? value * 100 : value; 
 }
 
 function getNestedValue(obj, path) {
@@ -111,16 +106,26 @@ function getNestedValue(obj, path) {
   const keys = path.split(".");
 
   // Check if the last part refers to an array (height or weight)
-  if (
-    keys[keys.length - 1] === "height" ||
-    keys[keys.length - 1] === "weight"
-  ) {
-    const value = keys.reduce((acc, key) => acc && acc[key], obj);
-    return value ? value[1] : "N/A"; // Return the second element of the array or "N/A" if missing
+  if (keys[keys.length - 1] === "height" || keys[keys.length - 1] === "weight") {
+    const value = keys.reduce((acc, key) => (acc && acc[key] ? acc[key] : null), obj);
+
+    // Ensure value is an array and has at least 2 elements
+    if (Array.isArray(value) && value.length > 1) {
+      let extractedValue = value[1];
+
+      // Ensure extractedValue is a string before calling startsWith
+      if (typeof extractedValue === "string" && extractedValue.startsWith("0")) {
+        return "N/A";
+      }
+
+      return extractedValue || "N/A"; // If it's empty or falsy, return "N/A"
+    }
+
+    return "N/A"; // Return "N/A" if value is not a valid array
   }
 
   // For other paths, continue as normal
-  return keys.reduce((acc, key) => acc && acc[key], obj) || "N/A";
+  return keys.reduce((acc, key) => (acc && acc[key] ? acc[key] : null), obj) || "N/A";
 }
 
 // Add sorting functionality to table headers
@@ -160,23 +165,21 @@ document.getElementById("search-bar").addEventListener("keyup", function () {
   const searchTerm = this.value.toLowerCase();
 
   const filteredHeroes = heroes
-    // filter if name contain any part of the search term
-    .filter((hero) => hero.name.toLowerCase().includes(searchTerm))
+
+    .filter((hero) => hero.name.toLowerCase().startsWith(searchTerm))
     .sort((a, b) => {
       const nameA = a.name.toLowerCase();
       const nameB = b.name.toLowerCase();
 
-      // sort by exact match first
       if (nameA === searchTerm) return -1;
       if (nameB === searchTerm) return 1;
-
-      // if name starts with search term, sort it first
+      
+      
       const startsWithA = nameA.startsWith(searchTerm);
       const startsWithB = nameB.startsWith(searchTerm);
       if (startsWithA && !startsWithB) return -1;
       if (!startsWithA && startsWithB) return 1;
-
-      // otherwise, consider equal for sorting
+      
       return 0;
     });
 
