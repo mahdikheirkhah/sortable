@@ -1,52 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>sortable</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f4f4f4;
-        }
-    </style>
-</head>
-
-<body>
-    <div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sortable</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <input
+        type="text"
+        id="search-bar"
+        placeholder="Search for a character..."
+      />
+      <div class="table-wrapper">
         <table id="data-table">
-            <thead>
-                <tr>
-                    <th>Icon</th>
-                    <th>Name</th>
-                    <th>Full Name</th>
-                    <th>intelligence</th>
-                    <th>strength</th>
-                    <th>speed</th>
-                    <th>durability</th>
-                    <th>power</th>
-                    <th>combat</th>
-                    <th>Race</th>
-                    <th>Gender</th>
-                    <th>Height</th>
-                    <th>Weight</th>
-                    <th>Place Of Birth</th>
-                    <th>Alignment</th>
-
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
+          <thead>
+            <tr>
+              <th>Icon</th>
+              <th>Name</th>
+              <th>Full Name</th>
+              <th>Intelligence</th>
+              <th>Strength</th>
+              <th>Speed</th>
+              <th>Durability</th>
+              <th>Power</th>
+              <th>Combat</th>
+              <th>Race</th>
+              <th>Gender</th>
+              <th>Height</th>
+              <th>Weight</th>
+              <th>Place Of Birth</th>
+              <th>Alignment</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
         </table>
+      </div>
     </div>
     <script src="sortable.js"></script>
-</body>
+  </body>
 </html>
