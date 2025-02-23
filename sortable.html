@@ -8,11 +8,26 @@
   </head>
   <body>
     <div class="container">
-      <input
-        type="text"
-        id="search-bar"
-        placeholder="Search for a character..."
-      />
+      <input type="text" id="search-bar" placeholder="Search...">
+      <label for="search-field">Search by:</label>
+      <select id="search-field">
+        <option value="name" selected>Name</option>
+        <option value="full_name">Full Name</option>
+        <option value="intelligence">Intelligence</option>
+        <option value="strength">Strength</option>
+        <option value="speed">Speed</option>
+        <option value="durability">Durability</option>
+        <option value="power">Power</option>
+        <option value="combat">Combat</option>
+        <option value="race">Race</option>
+        <option value="gender">Gender</option>
+        <option value="height">Height</option>
+        <option value="weight">Weight</option>
+        <option value="place_of_birth">Place of Birth</option>
+        <option value="alignment">Alignment</option>
+      </select>
+    </div>
+
       <div class="table-wrapper">
         <table id="data-table">
           <thead>
