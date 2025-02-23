@@ -17,8 +17,6 @@ async function fetchData() {
   }
 }
 
-// function for finding 
-
 // Function to render table
 function renderTable(data) {
   const tableBody = document.querySelector("#data-table tbody");
@@ -42,8 +40,8 @@ function renderTable(data) {
         <td>${powerstatsStr}</td>
         <td>${hero.appearance.race || "N/A"}</td>
         <td>${hero.appearance.gender || "N/A"}</td>
-        <td>${hero.appearance.height ? hero.appearance.height[1] : "N/A"}</td>
-        <td>${hero.appearance.weight ? hero.appearance.weight[1] : "N/A"}</td>
+        <td>${getNestedValue(hero, "appearance.height")}</td>
+        <td>${getNestedValue(hero, "appearance.weight")}</td>
         <td>${hero.biography.placeOfBirth || "N/A"}</td>
         <td>${hero.biography.alignment || "N/A"}</td>
     `;
@@ -102,6 +100,12 @@ async function sortAndRender(column, order) {
     } else if (column === "appearance.height") {
       valA = convertMeterToCm(valA);
       valB = convertMeterToCm(valB);
+    }
+
+    // If sorting alphabetically, use the first letter
+    if (typeof valA === "string" && typeof valB === "string") {
+      valA = valA.replace(/[^A-Za-z]/g, "").toUpperCase();
+      valB = valB.replace(/[^A-Za-z]/g, "").toUpperCase();
     }
 
     return order === "asc" ? (valA >= valB ? 1 : -1) : valA <= valB ? 1 : -1;
