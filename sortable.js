@@ -120,13 +120,15 @@ async function sortAndRender(column, order) {
 }
 
 function updatePaginationInfo() {
+  const dataSource = filteredHeroes.length > 0 ? filteredHeroes : heroes;
+  totalPages = pageSize === "all" ? 1 : Math.ceil(dataSource.length / pageSize);
   document.getElementById("page-info").textContent = `Page ${currentPage} / ${totalPages}`;
 }
 
-// Function to handle pagination
+
 function renderPaginatedTable(data) {
   totalPages = pageSize === "all" ? 1 : Math.ceil(data.length / pageSize);
-  currentPage = Math.min(currentPage, totalPages); // Prevent out-of-range pages
+  currentPage = Math.min(currentPage, totalPages) || 1; // Ensure page doesn't go out of range
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = pageSize === "all" ? data.length : startIndex + Number(pageSize);
@@ -135,6 +137,7 @@ function renderPaginatedTable(data) {
   renderTable(currentDisplay);
   updatePaginationInfo();
 }
+
 
 // Event listeners for pagination buttons
 document.getElementById("prev-page").addEventListener("click", () => {
@@ -154,7 +157,8 @@ document.getElementById("next-page").addEventListener("click", () => {
 document.getElementById("display").addEventListener("change", (e) => {
   pageSize = e.target.value === "all" ? "all" : Number(e.target.value);
   currentPage = 1;
-  totalPages = pageSize === "all" ? 1 : Math.ceil(heroes.length / pageSize); // Update pages
+  const dataSource = filteredHeroes.length > 0 ? filteredHeroes : heroes;
+  totalPages = pageSize === "all" ? 1 : Math.ceil(dataSource.length / pageSize); 
   updatePaginationInfo();
   sortAndRender(currentSort.column, currentSort.order);
 });
