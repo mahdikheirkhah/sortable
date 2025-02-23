@@ -13,7 +13,7 @@ body {
 /* Container styling */
 .container {
   width: 100%;
-  max-width: 90%;
+  max-width: 70%;
   background: #fff;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -36,8 +36,26 @@ body {
 }
 
 #search-bar:focus {
-  border-color: #007bff;
+  border-color: #2c5c8f;
   outline: none;
+}
+
+.pagination {
+  margin: 20px 0;
+}
+
+button {
+  margin: 0 5px;
+  background-color: #2c5c8f;
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #234870;
 }
 
 .table-wrapper {
@@ -67,7 +85,7 @@ td {
 
 /* Table header styling */
 th {
-  background-color: #007bff;
+  background-color: #2c5c8f;
   color: #fff;
   cursor: pointer;
   white-space: normal;
@@ -75,12 +93,13 @@ th {
 }
 
 th:hover {
-  background-color: #0056b3;
+  background-color: #234870;
 }
 
 /* Image styling */
 img {
   border-radius: 5px;
-  width: 100%;
-  height: auto;
+  width: 4em;
+  height: 4em;
+  object-fit: cover;
 }

@@ -18,36 +18,56 @@ async function fetchData() {
   }
 }
 
+// function for finding 
+
 // Function to render table
 function renderTable(data) {
   const tableBody = document.querySelector("#data-table tbody");
   tableBody.innerHTML = ""; // Clear previous data
 
   data.forEach((hero) => {
+    const powerstats = hero.powerstats;
+    const powerstatsStr = `
+      Intelligence: ${powerstats.intelligence || "N/A"}<br>
+      Strength: ${powerstats.strength || "N/A"}<br>
+      Speed: ${powerstats.speed || "N/A"}<br>
+      Durability: ${powerstats.durability || "N/A"}<br>
+      Power: ${powerstats.power || "N/A"}<br>
+      Combat: ${powerstats.combat || "N/A"}<br>`;
+
     const row = document.createElement("tr");
     row.innerHTML = `
-            <td><img src="${hero.images.xs}" alt="${hero.name}" width="50"></td>
-            <td>${hero.name}</td>
-            <td>${hero.biography.fullName || "N/A"}</td>
-            <td>${hero.powerstats.intelligence || "N/A"}</td>
-            <td>${hero.powerstats.strength || "N/A"}</td>
-            <td>${hero.powerstats.speed || "N/A"}</td>
-            <td>${hero.powerstats.durability || "N/A"}</td>
-            <td>${hero.powerstats.power || "N/A"}</td>
-            <td>${hero.powerstats.combat || "N/A"}</td>
-            <td>${hero.appearance.race || "N/A"}</td>
-            <td>${hero.appearance.gender || "N/A"}</td>
-            <td>${
-              hero.appearance.height ? hero.appearance.height[1] : "N/A"
-            }</td>
-            <td>${
-              hero.appearance.weight ? hero.appearance.weight[1] : "N/A"
-            }</td>
-            <td>${hero.biography.placeOfBirth || "N/A"}</td>
-            <td>${hero.biography.alignment || "N/A"}</td>
-        `;
+        <td><img src="${hero.images.xs}" alt="${hero.name}" width="50" loading="lazy"></td>
+        <td>${hero.name}</td>
+        <td>${hero.biography.fullName || "N/A"}</td>
+        <td>${powerstatsStr}</td>
+        <td>${hero.appearance.race || "N/A"}</td>
+        <td>${hero.appearance.gender || "N/A"}</td>
+        <td>${hero.appearance.height ? hero.appearance.height[1] : "N/A"}</td>
+        <td>${hero.appearance.weight ? hero.appearance.weight[1] : "N/A"}</td>
+        <td>${hero.biography.placeOfBirth || "N/A"}</td>
+        <td>${hero.biography.alignment || "N/A"}</td>
+    `;
     tableBody.appendChild(row);
   });
+}
+
+function sumPowerstats(powerstats) {
+  // Extract the numeric values of powerstats and sum them up
+  const stats = [
+    powerstats.intelligence,
+    powerstats.strength,
+    powerstats.speed,
+    powerstats.durability,
+    powerstats.power,
+    powerstats.combat
+  ];
+
+  // Filter out "N/A" or non-numeric values, and sum the rest
+  return stats.reduce((sum, stat) => {
+    const num = parseInt(stat, 10);
+    return !isNaN(num) ? sum + num : sum;
+  }, 0);
 }
 
 async function sortAndRender(column, order) {
@@ -72,16 +92,12 @@ async function sortAndRender(column, order) {
       const orderB = alignmentOrder[valB.toLowerCase()] || 999;
       return order === "asc" ? orderA - orderB : orderB - orderA;
     }
+    if (column === "powerstats") {
+      valA = sumPowerstats(valA);
+      valB = sumPowerstats(valB);
+    }
 
-    // Convert to number if applicable for other columns
-    const isNumericColumn = [
-      "powerstats.intelligence", "powerstats.strength", "powerstats.speed",
-      "powerstats.durability", "powerstats.power", "powerstats.combat"
-    ];
-    if (isNumericColumn.includes(column)) {
-      valA = Number(valA);
-      valB = Number(valB);
-    } else if (column === "appearance.weight") {
+    if (column === "appearance.weight") {
       valA = convertWeightToKg(valA);
       valB = convertWeightToKg(valB);
     } else if (column === "appearance.height") {
@@ -198,12 +214,7 @@ document.querySelectorAll("#data-table th").forEach((th, index) => {
     const columns = [
       "name",
       "biography.fullName",
-      "powerstats.intelligence",
-      "powerstats.strength",
-      "powerstats.speed",
-      "powerstats.durability",
-      "powerstats.power",
-      "powerstats.combat",
+      "powerstats",
       "appearance.race",
       "appearance.gender",
       "appearance.height",
