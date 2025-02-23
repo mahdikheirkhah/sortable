@@ -1,5 +1,8 @@
 let heroes = [];
 let filteredHeroes = [];
+let currentPage = 1;
+let pageSize = 20;
+let totalPages = 1;
 let currentSort = { column: null, order: "asc" };
 
 async function fetchData() {
@@ -89,9 +92,56 @@ async function sortAndRender(column, order) {
     return order === "asc" ? (valA >= valB ? 1 : -1) : valA <= valB ? 1 : -1;
   });
 
-  renderTable(sortedData);
+  const numPageSize = pageSize === "all" ? sortedData.length : Number(pageSize);
+
+  const startIndex = (currentPage-1) * numPageSize;
+  const endIndex = startIndex + numPageSize;
+  const currentDisplay = sortedData.slice(startIndex, endIndex);
+
+  renderTable(currentDisplay);
+  updatePaginationInfo();
   currentSort = { column, order };
 }
+
+function updatePaginationInfo() {
+  document.getElementById("page-info").textContent = `Page ${currentPage} / ${totalPages}`;
+}
+
+// Function to handle pagination
+function renderPaginatedTable(data) {
+  totalPages = pageSize === "all" ? 1 : Math.ceil(data.length / pageSize);
+  currentPage = Math.min(currentPage, totalPages); // Prevent out-of-range pages
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = pageSize === "all" ? data.length : startIndex + Number(pageSize);
+  const currentDisplay = data.slice(startIndex, endIndex);
+
+  renderTable(currentDisplay);
+  updatePaginationInfo();
+}
+
+// Event listeners for pagination buttons
+document.getElementById("prev-page").addEventListener("click", () => {
+  if (currentPage > 1) {
+    currentPage--;
+    sortAndRender(currentSort.column, currentSort.order);
+  }
+});
+
+document.getElementById("next-page").addEventListener("click", () => {
+  if (currentPage < totalPages) {
+    currentPage++;
+    sortAndRender(currentSort.column, currentSort.order);
+  }
+});
+
+document.getElementById("display").addEventListener("change", (e) => {
+  pageSize = e.target.value === "all" ? "all" : Number(e.target.value);
+  currentPage = 1;
+  totalPages = pageSize === "all" ? 1 : Math.ceil(heroes.length / pageSize); // Update pages
+  updatePaginationInfo();
+  sortAndRender(currentSort.column, currentSort.order);
+});
 
 
 // Convert weight to kg (handles "78 kg" and "2 tons")
@@ -199,11 +249,19 @@ document.getElementById("search-bar").addEventListener("keyup", function () {
       // otherwise, consider equal for sorting
       return 0;
     });
+    
+  // Update pagination based on search results
+  currentPage = 1; // Reset to the first page
+  totalPages = pageSize === "all" ? 1 : Math.ceil(filteredHeroes.length / pageSize); // Update total pages
+  updatePaginationInfo();
 
-  renderTable(filteredHeroes);
-});
+  // Render the filtered and paginated results
+  renderPaginatedTable(filteredHeroes);   
+  
+  });
 
 document.addEventListener("DOMContentLoaded", async () => {
   const heroes = await fetchData(); // Fetch data once when the page loads
-  renderTable(heroes); // Render the fetched data into the table
+  totalPages = Math.ceil(heroes.length / pageSize);
+  sortAndRender("name", "asc"); // Render the fetched data into the table
 });

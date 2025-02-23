@@ -13,6 +13,17 @@
         id="search-bar"
         placeholder="Search for a character..."
       />
+      <label for="display">Display:</label>
+      <select id="display">
+        <option value="10">10</option>
+        <option value="20" selected>20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
+        <option value="all">All</option>
+      </select>
+      <button id="prev-page">Previous</button>
+        <span id="page-info">Page 1 / ?</span>
+        <button id="next-page">Next</button>
       <div class="table-wrapper">
         <table id="data-table">
           <thead>
