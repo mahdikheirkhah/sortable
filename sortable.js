@@ -49,6 +49,12 @@ function renderTable(data) {
 
 async function sortAndRender(column, order) {
   const sortHeroes = filteredHeroes.length > 0 ? filteredHeroes : heroes;
+  const alignmentOrder = {
+    "bad": 1,
+    "neutral": 2,
+    "good": 3
+  };
+
   const sortedData = [...sortHeroes].sort((a, b) => {
     let valA = getNestedValue(a, column);
     let valB = getNestedValue(b, column);
@@ -57,7 +63,14 @@ async function sortAndRender(column, order) {
     if (valA === null || valA === "N/A" || valA === "-") return 1;
     if (valB === null || valB === "N/A" || valB === "-") return -1;
 
-    // Convert to number if applicable
+    // if alignment column, sort by alignmentOrder
+    if (column === "biography.alignment") {
+      const orderA = alignmentOrder[valA.toLowerCase()] || 999; // 999 for unknown values
+      const orderB = alignmentOrder[valB.toLowerCase()] || 999;
+      return order === "asc" ? orderA - orderB : orderB - orderA;
+    }
+
+    // Convert to number if applicable for other columns
     const isNumericColumn = [
       "powerstats.intelligence", "powerstats.strength", "powerstats.speed",
       "powerstats.durability", "powerstats.power", "powerstats.combat"
