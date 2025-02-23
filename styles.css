@@ -9,13 +9,14 @@ body {
   align-items: center;
   min-height: 100vh;
   padding: 20px;
-  overflow: auto;
+  overflow: hidden;
 }
 
 /* Container styling */
 .container {
   width: 100%;
   max-width: 70%;
+  height: 85vh;
   background: #fff;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
