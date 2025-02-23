@@ -1,4 +1,3 @@
-let heroes = [];
 let filteredHeroes = [];
 let currentPage = 1;
 let pageSize = 20;
