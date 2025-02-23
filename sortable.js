@@ -1,3 +1,7 @@
+let heroes = [];
+let filteredHeroes = [];
+let currentSort = { column: null, order: "asc" };
+
 async function fetchData() {
   try {
     const response = await fetch("https://rawcdn.githack.com/akabab/superhero-api/0.2.0/api/all.json");
@@ -10,7 +14,6 @@ async function fetchData() {
     return []; // Return an empty array in case of an error
   }
 }
-
 
 // Function to render table
 function renderTable(data) {
@@ -45,9 +48,8 @@ function renderTable(data) {
 }
 
 async function sortAndRender(column, order) {
-  heroes = await fetchData(); // Always fetch fresh data
-  console.log(heroes);
-  const sortedData = [...heroes].sort((a, b) => {
+  const sortHeroes = filteredHeroes.length > 0 ? filteredHeroes : heroes;
+  const sortedData = [...sortHeroes].sort((a, b) => {
     let valA = getNestedValue(a, column);
     let valB = getNestedValue(b, column);
 
@@ -159,103 +161,34 @@ document.querySelectorAll("#data-table th").forEach((th, index) => {
 });
 
 // search functionality
-document.getElementById("search-bar").addEventListener("keyup", async function () {
-  heroes = await fetchData(); // Always fetch fresh data
+document.getElementById("search-bar").addEventListener("keyup", function () {
+  // retrieve current search input and lowercase (case-insensitive)
+  const searchTerm = this.value.toLowerCase();
 
-  let selectedField = document.getElementById("search-field").value;
-  let searchTerm = this.value.trim();
+  // filter heroes based on search term
+  filteredHeroes = heroes
+    // filter if name contain any part of the search term
+    .filter((hero) => hero.name.toLowerCase().includes(searchTerm))
+    .sort((a, b) => {
+      const nameA = a.name.toLowerCase();
+      const nameB = b.name.toLowerCase();
 
-  if (!searchTerm) return renderTable(heroes);
+      // sort by exact match first
+      if (nameA === searchTerm) return -1;
+      if (nameB === searchTerm) return 1;
 
-  let operator = null;
-  let value = searchTerm;
-  const operators = ["+", "-", "=", "!=", ">", "<", "~"];
-  
-  for (let op of operators) {
-    if (searchTerm.startsWith(op)) {
-      operator = op;
-      value = searchTerm.slice(op.length).trim();
-      break;
-    }
-  }
+      // if name starts with search term, sort it first
+      const startsWithA = nameA.startsWith(searchTerm);
+      const startsWithB = nameB.startsWith(searchTerm);
+      if (startsWithA && !startsWithB) return -1;
+      if (!startsWithA && startsWithB) return 1;
 
-  const columns = {
-    "name": "name", "full_name": "biography.fullName", "race": "appearance.race",
-    "gender": "appearance.gender", "place_of_birth": "biography.placeOfBirth",
-    "alignment": "biography.alignment", "intelligence": "powerstats.intelligence",
-    "strength": "powerstats.strength", "speed": "powerstats.speed",
-    "durability": "powerstats.durability", "power": "powerstats.power",
-    "combat": "powerstats.combat", "height": "appearance.height", "weight": "appearance.weight",
-  };
-
-  let column = columns[selectedField];
-  if (!column) return;
-
-  const isNumericColumn = ["powerstats.intelligence", "powerstats.strength", "powerstats.speed",
-    "powerstats.durability", "powerstats.power", "powerstats.combat"];
-
-  const filteredHeroes = heroes.filter(hero => {
-    let heroValue = getNestedValue(hero, column);
-    
-    if (isNumericColumn.includes(column)) {
-      heroValue = Number(heroValue);
-      value = Number(value);
-      if (isNaN(heroValue) || isNaN(value)) return false;
-    } 
-
-    if (column === "appearance.weight") {
-      heroValue = convertWeightToKg(heroValue);
-      value = Number(value);
-      if (isNaN(heroValue) || isNaN(value)) return false;
-    } 
-    if (column === "appearance.height") {
-      heroValue = convertMeterToCm(heroValue);
-      value = Number(value);
-      if (isNaN(heroValue) || isNaN(value)) return false;
-    }
-    if (typeof heroValue === "string" && typeof value === "string"){
-      heroValue = heroValue.toLowerCase();
-      value = value.toLowerCase();
-    }
-    // Apply filters based on the operator
-    switch (operator) {
-      case "+": return heroValue.includes(value);
-      case "-": return !heroValue.includes(value);
-      case "=": return heroValue === value;
-      case "!=": return heroValue !== value;
-      case ">": return heroValue > value;
-      case "<": return heroValue < value;
-      case "~": return heroValue.includes(value) || fuzzyMatch(heroValue, value);
-      default: return heroValue.startsWith(value);
-    }
-  });
+      // otherwise, consider equal for sorting
+      return 0;
+    });
 
   renderTable(filteredHeroes);
 });
-
-
-// Basic fuzzy search using Levenshtein distance
-function fuzzyMatch(str, term) {
-  let distance = levenshteinDistance(str.toLowerCase(), term.toLowerCase());
-  return distance <= 2; // Allow small typos
-}
-
-function levenshteinDistance(a, b) {
-  const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]).map((row, i) =>
-    row.concat(Array.from({ length: b.length }, (_, j) => (i === 0 ? j + 1 : 0)))
-  );
-
-  for (let i = 1; i <= a.length; i++) {
-    for (let j = 1; j <= b.length; j++) {
-      matrix[i][j] =
-        a[i - 1] === b[j - 1]
-          ? matrix[i - 1][j - 1]
-          : Math.min(matrix[i - 1][j - 1], matrix[i][j - 1], matrix[i - 1][j]) + 1;
-    }
-  }
-
-  return matrix[a.length][b.length];
-}
 
 document.addEventListener("DOMContentLoaded", async () => {
   const heroes = await fetchData(); // Fetch data once when the page loads
