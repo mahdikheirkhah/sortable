@@ -72,9 +72,6 @@ function sumPowerstats(powerstats) {
 
 async function sortAndRender(column, order) {
   const sortHeroes = filteredHeroes.length > 0 ? filteredHeroes : heroes;
-  console.log(filteredHeroes);
-  console.log(column);
-  console.log(order);
   const alignmentOrder = {
     "bad": 1,
     "neutral": 2,
@@ -189,46 +186,45 @@ function convertWeightToKg(weight) {
   if (!weight) return null;
 
   let match = weight.match(/(\d+|\d+,\d+)\s*(kg|tons)/i);
-  if (!match) return null; // If no match, return null
-  let digits = match[1].replace(",", ""); // Remove the comma
-  let value = parseFloat(digits); // Extract numeric value
-  let unit = match[2].toLowerCase(); // Extract unit
-  return unit === "tons" ? value * 1000 : value; // Convert tons to kg
+  if (!match) return null;
+  let digits = match[1].replace(",", ""); 
+  let value = parseFloat(digits); 
+  let unit = match[2].toLowerCase(); 
+  return unit === "tons" ? value * 1000 : value; 
 }
 
 function convertHeightToCm(height) {
   if (!height) return null;
   let match = height.match(/(\d+|\d+.\d+)\s*(meters|cm)/i);
-  if (!match) return null; // If no match, return null
-  let value = parseFloat(match[1]); // Extract numeric value
-  let unit = match[2].toLowerCase(); // Extract unit
+  if (!match) return null; 
+  let value = parseFloat(match[1]); 
+  let unit = match[2].toLowerCase();
   return unit === "meters" ? value * 100 : value; 
 }
 
 function getNestedValue(obj, path) {
-  // Split the path into parts
+
   const keys = path.split(".");
 
-  // Check if the last part refers to an array (height or weight)
+  
   if (keys[keys.length - 1] === "height" || keys[keys.length - 1] === "weight") {
     const value = keys.reduce((acc, key) => (acc && acc[key] ? acc[key] : null), obj);
 
-    // Ensure value is an array and has at least 2 elements
+   
     if (Array.isArray(value) && value.length > 1) {
       let extractedValue = value[1];
 
-      // Ensure extractedValue is a string before calling startsWith
+    
       if (typeof extractedValue === "string" && extractedValue.startsWith("0")) {
         return "N/A";
       }
 
-      return extractedValue || "N/A"; // If it's empty or falsy, return "N/A"
+      return extractedValue || "N/A"; 
     }
 
-    return "N/A"; // Return "N/A" if value is not a valid array
+    return "N/A";
   }
 
-  // For other paths, continue as normal
   return keys.reduce((acc, key) => (acc && acc[key] ? acc[key] : null), obj) || "N/A";
 }
 
@@ -259,6 +255,9 @@ document.querySelectorAll("#data-table th").forEach((th, index) => {
 });
 
 
+document.getElementById("search-field").addEventListener("click",  () => {
+    document.getElementById("search-bar").dispatchEvent(new Event('keyup'));
+});
 document.getElementById("search-bar").addEventListener("keyup", async function () {
   heroes = await fetchData(); // Always fetch fresh data
 
@@ -333,7 +332,6 @@ document.getElementById("search-bar").addEventListener("keyup", async function (
       value = value.toLowerCase();
     }
     // Apply filters based on the operator
-    console.log(isNumeric);
     if (isNumeric && isNumericOP){
       switch (operator) {
         case "=": 
