@@ -115,8 +115,10 @@ th:hover {
 /* Image styling */
 img {
   border-radius: 5px;
-  width: 80px;
-  height: 80px;
+  margin-left: 15px;
+  margin-top: 5px;
+  width: 50px;
+  height: 100%;
   object-fit: cover;
 }
 
@@ -124,4 +126,11 @@ img {
   width: 480px !important;
   height: 640px !important;
   object-fit: cover; /* Optional: ensures it fills the space properly */
+}
+
+tr {
+  cursor: pointer; /* Make the whole row look clickable */
+}
+tr:hover {
+  background-color: #f0f0f0; /* Light gray background on hover */
 }

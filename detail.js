@@ -49,8 +49,14 @@ function displayHeroDetails(hero) {
     container.innerHTML = ""; // Clear previous content
 
     function addDetail(specification, value) {
+        const formattedSpec = specification.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+
         const p = document.createElement("p");
-        p.innerHTML = `${specification}: <span>${value || "N/A"}</span>`;
+        if (specification === "groupAffiliation" || specification === "relatives" || specification === "occupation") {
+            p.innerHTML = `${formattedSpec}: <span>${value.split(";").join("<br>")}</span>`;
+        } else {
+        p.innerHTML = `${formattedSpec}: <span>${value || "N/A"}</span>`;
+        }
         container.appendChild(p);
     }
 
