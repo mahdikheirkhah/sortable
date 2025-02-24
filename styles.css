@@ -119,3 +119,9 @@ img {
   height: 80px;
   object-fit: cover;
 }
+
+#heroImage {
+  width: 480px !important;
+  height: 640px !important;
+  object-fit: cover; /* Optional: ensures it fills the space properly */
+}

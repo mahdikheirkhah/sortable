@@ -1,15 +1,17 @@
+let heroes = [];
 let filteredHeroes = [];
 let currentPage = 1;
 let pageSize = 20;
 let totalPages = 1;
 let currentSort = { column: null, order: "asc" };
+let isCalledFromLoad = false;
 
 async function fetchData() {
   try {
     const response = await fetch("https://rawcdn.githack.com/akabab/superhero-api/0.2.0/api/all.json");
     if (!response.ok) throw new Error("Failed to fetch data");
     heroes = await response.json();
-    console.log(heroes)
+    console.log(heroes);
     return heroes;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -33,6 +35,7 @@ function renderTable(data) {
       Combat: ${powerstats.combat || "N/A"}<br>`;
 
     const row = document.createElement("tr");
+    row.dataset.id = hero.slug; 
     row.innerHTML = `
         <td><img src="${hero.images.xs}" alt="${hero.name}" width="50" loading="lazy"></td>
         <td>${hero.name}</td>
@@ -69,6 +72,9 @@ function sumPowerstats(powerstats) {
 
 async function sortAndRender(column, order) {
   const sortHeroes = filteredHeroes.length > 0 ? filteredHeroes : heroes;
+  console.log(filteredHeroes);
+  console.log(column);
+  console.log(order);
   const alignmentOrder = {
     "bad": 1,
     "neutral": 2,
@@ -76,6 +82,7 @@ async function sortAndRender(column, order) {
   };
 
   const sortedData = [...sortHeroes].sort((a, b) => {
+
     let valA = getNestedValue(a, column);
     let valB = getNestedValue(b, column);
 
@@ -98,8 +105,8 @@ async function sortAndRender(column, order) {
       valA = convertWeightToKg(valA);
       valB = convertWeightToKg(valB);
     } else if (column === "appearance.height") {
-      valA = convertMeterToCm(valA);
-      valB = convertMeterToCm(valB);
+      valA = convertHeightToCm(valA);
+      valB = convertHeightToCm(valB);
     }
 
     // If sorting alphabetically, use the first letter
@@ -119,6 +126,7 @@ async function sortAndRender(column, order) {
 
   renderTable(currentDisplay);
   updatePaginationInfo();
+  updateURL();
   currentSort = { column, order };
 }
 
@@ -147,24 +155,33 @@ document.getElementById("prev-page").addEventListener("click", () => {
   if (currentPage > 1) {
     currentPage--;
     sortAndRender(currentSort.column, currentSort.order);
+    updateURL();
   }
 });
 
 document.getElementById("next-page").addEventListener("click", () => {
+  console.log(currentPage);
   if (currentPage < totalPages) {
     currentPage++;
     sortAndRender(currentSort.column, currentSort.order);
+    updateURL();
   }
 });
 
 document.getElementById("display").addEventListener("change", (e) => {
   pageSize = e.target.value === "all" ? "all" : Number(e.target.value);
-  currentPage = 1;
+  currentPage = 1;  // Reset to the first page when changing page size
+
+  // Update the pagination info and re-render the table
   const dataSource = filteredHeroes.length > 0 ? filteredHeroes : heroes;
-  totalPages = pageSize === "all" ? 1 : Math.ceil(dataSource.length / pageSize); 
+  totalPages = pageSize === "all" ? 1 : Math.ceil(dataSource.length / pageSize);
   updatePaginationInfo();
   sortAndRender(currentSort.column, currentSort.order);
+
+  // Update the dropdown value to reflect the selected page size
+  document.getElementById("display").value = pageSize === "all" ? "all" : pageSize.toString();
 });
+
 
 
 // Convert weight to kg (handles "78 kg" and "2 tons")
@@ -179,7 +196,7 @@ function convertWeightToKg(weight) {
   return unit === "tons" ? value * 1000 : value; // Convert tons to kg
 }
 
-function convertMeterToCm(height) {
+function convertHeightToCm(height) {
   if (!height) return null;
   let match = height.match(/(\d+|\d+.\d+)\s*(meters|cm)/i);
   if (!match) return null; // If no match, return null
@@ -241,45 +258,208 @@ document.querySelectorAll("#data-table th").forEach((th, index) => {
   });
 });
 
-// search functionality
-document.getElementById("search-bar").addEventListener("keyup", function () {
-  // retrieve current search input and lowercase (case-insensitive)
-  const searchTerm = this.value.toLowerCase();
 
-  // filter heroes based on search term
-  filteredHeroes = heroes
-    // filter if name contain any part of the search term
-    .filter((hero) => hero.name.toLowerCase().includes(searchTerm))
-    .sort((a, b) => {
-      const nameA = a.name.toLowerCase();
-      const nameB = b.name.toLowerCase();
+document.getElementById("search-bar").addEventListener("keyup", async function () {
+  heroes = await fetchData(); // Always fetch fresh data
 
-      // sort by exact match first
-      if (nameA === searchTerm) return -1;
-      if (nameB === searchTerm) return 1;
+  let selectedField = document.getElementById("search-field").value;
+  let searchTerm = this.value.trim();
 
-      // if name starts with search term, sort it first
-      const startsWithA = nameA.startsWith(searchTerm);
-      const startsWithB = nameB.startsWith(searchTerm);
-      if (startsWithA && !startsWithB) return -1;
-      if (!startsWithA && startsWithB) return 1;
-
-      // otherwise, consider equal for sorting
-      return 0;
-    });
-    
-  // Update pagination based on search results
-  currentPage = 1; // Reset to the first page
-  totalPages = pageSize === "all" ? 1 : Math.ceil(filteredHeroes.length / pageSize); // Update total pages
-  updatePaginationInfo();
-
-  // Render the filtered and paginated results
-  renderPaginatedTable(filteredHeroes);   
+  if (!searchTerm) {
+    filteredHeroes = [];
+    return renderPaginatedTable(heroes);
+  }
+  let isNumericOP = false;
+  let operator = null;
+  let value = searchTerm;
+  const operators = ["+", "-", "=", "!=", ">", "<", "~"];
   
+  for (let op of operators) {
+    if (searchTerm.startsWith(op)) {
+      operator = op;
+      switch (operator) {
+        case "=": 
+            isNumericOP = true;
+        case "!=": 
+            isNumericOP = true;
+        case ">": 
+             isNumericOP = true;
+        case "<": 
+            isNumericOP = true;
+      }
+      value = searchTerm.slice(op.length).trim();
+      break;
+    }
+  }
+
+  const columns = {
+    "name": "name", "full_name": "biography.fullName", "race": "appearance.race",
+    "gender": "appearance.gender", "place_of_birth": "biography.placeOfBirth",
+    "alignment": "biography.alignment", "intelligence": "powerstats.intelligence",
+    "strength": "powerstats.strength", "speed": "powerstats.speed",
+    "durability": "powerstats.durability", "power": "powerstats.power",
+    "combat": "powerstats.combat", "height": "appearance.height", "weight": "appearance.weight",
+  };
+
+  let column = columns[selectedField];
+  if (!column) return;
+
+  const isNumericColumn = ["powerstats.intelligence", "powerstats.strength", "powerstats.speed",
+    "powerstats.durability", "powerstats.power", "powerstats.combat"];
+
+  filteredHeroes = heroes.filter(hero => {
+    let heroValue = getNestedValue(hero, column);
+    let isNumeric = isNumericColumn.includes(column);
+    if (isNumeric) {
+      heroValue = Number(heroValue);
+      value = Number(value);
+      if (isNaN(heroValue) || isNaN(value)) return false;
+    } 
+
+    if (column === "appearance.weight") {
+      isNumeric = true;
+      heroValue = convertWeightToKg(heroValue);
+      value = Number(value);
+      if (isNaN(heroValue) || isNaN(value)) return false;
+    } 
+    if (column === "appearance.height") {
+      isNumeric = true;
+      heroValue = convertHeightToCm(heroValue);
+      value = Number(value);
+      if (isNaN(heroValue) || isNaN(value)) return false;
+    }
+    if (typeof heroValue === "string" && typeof value === "string"){
+      heroValue = heroValue.toLowerCase();
+      value = value.toLowerCase();
+    }
+    // Apply filters based on the operator
+    console.log(isNumeric);
+    if (isNumeric && isNumericOP){
+      switch (operator) {
+        case "=": 
+            return heroValue === value;
+        case "!=": 
+            return heroValue !== value;
+        case ">": 
+            return heroValue > value;
+        case "<": 
+            return heroValue < value;
+      }
+    } else if (!isNumeric && !isNumericOP){
+      switch (operator) {
+        case "+":
+            return heroValue.includes(value);
+        case "-":
+            return !heroValue.includes(value);
+        case "~": 
+            return heroValue.includes(value) || fuzzyMatch(heroValue, value);
+        default: 
+            return heroValue.startsWith(value);
+      }
+    } else{
+      return false
+    }
   });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const heroes = await fetchData(); // Fetch data once when the page loads
-  totalPages = Math.ceil(heroes.length / pageSize);
-  sortAndRender("name", "asc"); // Render the fetched data into the table
+  // Reset pagination for filtered results
+  if(!isCalledFromLoad){
+    currentPage = 1;
+  }
+  
+  isCalledFromLoad = false;
+  totalPages = Math.ceil(filteredHeroes.length / pageSize);
+  renderPaginatedTable(filteredHeroes);
+  updateURL();
 });
+
+
+// Basic fuzzy search using Levenshtein distance
+function fuzzyMatch(str, term) {
+  let distance = levenshteinDistance(str.toLowerCase(), term.toLowerCase());
+  return distance <= 2; // Allow small typos
+}
+
+function levenshteinDistance(a, b) {
+  const matrix = Array.from({ length: a.length + 1 }, (_, i) => [i]).map((row, i) =>
+    row.concat(Array.from({ length: b.length }, (_, j) => (i === 0 ? j + 1 : 0)))
+  );
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      matrix[i][j] =
+        a[i - 1] === b[j - 1]
+          ? matrix[i - 1][j - 1]
+          : Math.min(matrix[i - 1][j - 1], matrix[i][j - 1], matrix[i - 1][j]) + 1;
+    }
+  }
+
+  return matrix[a.length][b.length];
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  // Trigger the search immediately after loading if there's a search query
+  if (params.has("sort") && params.has("order")) {
+    currentSort.column = params.get("sort");
+    currentSort.order = params.get("order");
+  }
+  if (params.has("pageSize")) {
+    pageSize = params.get("pageSize") === "all" ? "all" : Number(params.get("pageSize"));
+    if(pageSize !== "all" && pageSize !== 10 && pageSize !== 20 && pageSize !== 50 && pageSize !== 100){
+      pageSize = 20;
+    }
+    document.getElementById("display").value = pageSize;
+  }
+
+  if (params.has("page")) {
+    currentPage = parseInt(params.get("page"), 10) || 1;
+  }
+
+  if (params.has("search") && params.has("field")) {
+    document.getElementById("search-bar").value = params.get("search");
+    if (currentSort.column === null){
+      currentSort.column = params.get("field");
+    }
+    document.getElementById("search-field").value = params.get("field");
+    isCalledFromLoad = true;
+    document.getElementById("search-bar").dispatchEvent(new Event('keyup')); // Simulate the keyup event
+  } else{
+      // Fetch the data
+  heroes = await fetchData();  
+  sortAndRender(currentSort.column || "name", currentSort.order || "asc");
+  }
+});
+
+
+
+document.getElementById("table-body").addEventListener("click", (event) => {
+  const row = event.target.closest("tr");
+  if (!row) return;
+
+  const heroSlug = row.dataset.id;
+  if (heroSlug) {
+      window.location.href = `detail.html?slug=${heroSlug}`;
+  }
+});
+
+function updateURL() {
+  const params = new URLSearchParams();
+
+  if (document.getElementById("search-bar").value) {
+    params.set("search", document.getElementById("search-bar").value);
+  }
+
+  if (document.getElementById("search-field").value) {
+    params.set("field", document.getElementById("search-field").value);
+  }
+
+  if (currentSort.column) {
+    params.set("sort", currentSort.column);
+    params.set("order", currentSort.order);
+  }
+
+  params.set("page", currentPage);
+  params.set("pageSize", pageSize);
+
+  window.history.replaceState({}, "", `${window.location.pathname}?${params.toString()}`);
+}
